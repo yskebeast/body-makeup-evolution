@@ -28,6 +28,10 @@ import type {
   ValidationError,
 } from "../../models";
 
+import { customFetch } from "../../custom/customFetch";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 export const getPetsListPetsUrl = (params?: PetsListPetsParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -46,15 +50,10 @@ export const petsListPets = async (
   params?: PetsListPetsParams,
   options?: RequestInit,
 ): Promise<Pet[]> => {
-  const res = await fetch(getPetsListPetsUrl(params), {
+  return customFetch<Pet[]>(getPetsListPetsUrl(params), {
     ...options,
     method: "GET",
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  const data: Pet[] = body ? JSON.parse(body) : {};
-
-  return data;
 };
 
 export const getPetsListPetsQueryKey = (params?: PetsListPetsParams) => {
@@ -72,16 +71,16 @@ export const getPetsListPetsQueryOptions = <
       TError,
       TData
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
 ) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey = queryOptions?.queryKey ?? getPetsListPetsQueryKey(params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof petsListPets>>> = ({
     signal,
-  }) => petsListPets(params, { signal, ...fetchOptions });
+  }) => petsListPets(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof petsListPets>>,
@@ -106,7 +105,7 @@ export function usePetsListPets<
       TError,
       TData
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getPetsListPetsQueryOptions(params, options);
@@ -139,17 +138,12 @@ export const petsCreatePet = async (
   params?: PetsCreatePetParams,
   options?: RequestInit,
 ): Promise<Pet | Pet> => {
-  const res = await fetch(getPetsCreatePetUrl(params), {
+  return customFetch<Pet | Pet>(getPetsCreatePetUrl(params), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(pet),
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  const data: Pet | Pet = body ? JSON.parse(body) : {};
-
-  return data;
 };
 
 export const getPetsCreatePetMutationOptions = <
@@ -162,7 +156,7 @@ export const getPetsCreatePetMutationOptions = <
     { data: Pet; params?: PetsCreatePetParams },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof petsCreatePet>>,
   TError,
@@ -170,13 +164,13 @@ export const getPetsCreatePetMutationOptions = <
   TContext
 > => {
   const mutationKey = ["petsCreatePet"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof petsCreatePet>>,
@@ -184,7 +178,7 @@ export const getPetsCreatePetMutationOptions = <
   > = (props) => {
     const { data, params } = props ?? {};
 
-    return petsCreatePet(data, params, fetchOptions);
+    return petsCreatePet(data, params, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -206,7 +200,7 @@ export const usePetsCreatePet = <
     { data: Pet; params?: PetsCreatePetParams },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof petsCreatePet>>,
   TError,
@@ -238,15 +232,10 @@ export const petsGetPet = async (
   params?: PetsGetPetParams,
   options?: RequestInit,
 ): Promise<Pet> => {
-  const res = await fetch(getPetsGetPetUrl(petId, params), {
+  return customFetch<Pet>(getPetsGetPetUrl(petId, params), {
     ...options,
     method: "GET",
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  const data: Pet = body ? JSON.parse(body) : {};
-
-  return data;
 };
 
 export const getPetsGetPetQueryKey = (
@@ -268,17 +257,17 @@ export const getPetsGetPetQueryOptions = <
       TError,
       TData
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
 ) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
     queryOptions?.queryKey ?? getPetsGetPetQueryKey(petId, params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof petsGetPet>>> = ({
     signal,
-  }) => petsGetPet(petId, params, { signal, ...fetchOptions });
+  }) => petsGetPet(petId, params, { signal, ...requestOptions });
 
   return {
     queryKey,
@@ -309,7 +298,7 @@ export function usePetsGetPet<
       TError,
       TData
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getPetsGetPetQueryOptions(petId, params, options);
@@ -348,17 +337,12 @@ export const petsUpdatePet = async (
   params?: PetsUpdatePetParams,
   options?: RequestInit,
 ): Promise<Pet> => {
-  const res = await fetch(getPetsUpdatePetUrl(petId, params), {
+  return customFetch<Pet>(getPetsUpdatePetUrl(petId, params), {
     ...options,
     method: "PUT",
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(pet),
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  const data: Pet = body ? JSON.parse(body) : {};
-
-  return data;
 };
 
 export const getPetsUpdatePetMutationOptions = <
@@ -375,7 +359,7 @@ export const getPetsUpdatePetMutationOptions = <
     { petId: number; data: Pet; params?: PetsUpdatePetParams },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof petsUpdatePet>>,
   TError,
@@ -383,13 +367,13 @@ export const getPetsUpdatePetMutationOptions = <
   TContext
 > => {
   const mutationKey = ["petsUpdatePet"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof petsUpdatePet>>,
@@ -397,7 +381,7 @@ export const getPetsUpdatePetMutationOptions = <
   > = (props) => {
     const { petId, data, params } = props ?? {};
 
-    return petsUpdatePet(petId, data, params, fetchOptions);
+    return petsUpdatePet(petId, data, params, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -427,7 +411,7 @@ export const usePetsUpdatePet = <
     { petId: number; data: Pet; params?: PetsUpdatePetParams },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof petsUpdatePet>>,
   TError,
@@ -462,15 +446,10 @@ export const petsDeletePet = async (
   params?: PetsDeletePetParams,
   options?: RequestInit,
 ): Promise<null> => {
-  const res = await fetch(getPetsDeletePetUrl(petId, params), {
+  return customFetch<null>(getPetsDeletePetUrl(petId, params), {
     ...options,
     method: "DELETE",
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  const data: null = body ? JSON.parse(body) : {};
-
-  return data;
 };
 
 export const getPetsDeletePetMutationOptions = <
@@ -483,7 +462,7 @@ export const getPetsDeletePetMutationOptions = <
     { petId: number; params?: PetsDeletePetParams },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof petsDeletePet>>,
   TError,
@@ -491,13 +470,13 @@ export const getPetsDeletePetMutationOptions = <
   TContext
 > => {
   const mutationKey = ["petsDeletePet"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof petsDeletePet>>,
@@ -505,7 +484,7 @@ export const getPetsDeletePetMutationOptions = <
   > = (props) => {
     const { petId, params } = props ?? {};
 
-    return petsDeletePet(petId, params, fetchOptions);
+    return petsDeletePet(petId, params, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -527,7 +506,7 @@ export const usePetsDeletePet = <
     { petId: number; params?: PetsDeletePetParams },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof petsDeletePet>>,
   TError,
