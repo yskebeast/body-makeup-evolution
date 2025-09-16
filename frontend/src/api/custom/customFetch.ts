@@ -1,5 +1,5 @@
 export const customFetch = async <TData>(url: string, options: RequestInit = {}): Promise<TData> => {
-  const baseUrl = process.env.API_BASE_URL || "";
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
   const requestUrl = new URL(url, baseUrl);
 
   const headers = {

@@ -4,15 +4,22 @@
  * Pet Store
  * OpenAPI spec version: 2.0
  */
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
+  QueryClient,
   QueryFunction,
   QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
+  UseSuspenseQueryOptions,
+  UseSuspenseQueryResult,
 } from "@tanstack/react-query";
 
 import type {
@@ -25,6 +32,10 @@ import type {
   UnauthorizedError,
   ValidationError,
 } from "../../models";
+
+import { customFetch } from "../../custom/customFetch";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 export const getToysListToysUrl = (
   petId: number,
@@ -50,15 +61,10 @@ export const toysListToys = async (
   params?: ToysListToysParams,
   options?: RequestInit,
 ): Promise<Toy[]> => {
-  const res = await fetch(getToysListToysUrl(petId, params), {
+  return customFetch<Toy[]>(getToysListToysUrl(petId, params), {
     ...options,
     method: "GET",
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  const data: Toy[] = body ? JSON.parse(body) : {};
-
-  return data;
 };
 
 export const getToysListToysQueryKey = (
@@ -75,22 +81,20 @@ export const getToysListToysQueryOptions = <
   petId: number,
   params?: ToysListToysParams,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof toysListToys>>,
-      TError,
-      TData
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof toysListToys>>, TError, TData>
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
 ) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
     queryOptions?.queryKey ?? getToysListToysQueryKey(petId, params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof toysListToys>>> = ({
     signal,
-  }) => toysListToys(petId, params, { signal, ...fetchOptions });
+  }) => toysListToys(petId, params, { signal, ...requestOptions });
 
   return {
     queryKey,
@@ -101,7 +105,7 @@ export const getToysListToysQueryOptions = <
     Awaited<ReturnType<typeof toysListToys>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type ToysListToysQueryResult = NonNullable<
@@ -114,20 +118,245 @@ export function useToysListToys<
   TError = NotFoundError,
 >(
   petId: number,
+  params: undefined | ToysListToysParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof toysListToys>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof toysListToys>>,
+          TError,
+          Awaited<ReturnType<typeof toysListToys>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useToysListToys<
+  TData = Awaited<ReturnType<typeof toysListToys>>,
+  TError = NotFoundError,
+>(
+  petId: number,
   params?: ToysListToysParams,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof toysListToys>>,
-      TError,
-      TData
-    >;
-    fetch?: RequestInit;
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof toysListToys>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof toysListToys>>,
+          TError,
+          Awaited<ReturnType<typeof toysListToys>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
   },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useToysListToys<
+  TData = Awaited<ReturnType<typeof toysListToys>>,
+  TError = NotFoundError,
+>(
+  petId: number,
+  params?: ToysListToysParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof toysListToys>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useToysListToys<
+  TData = Awaited<ReturnType<typeof toysListToys>>,
+  TError = NotFoundError,
+>(
+  petId: number,
+  params?: ToysListToysParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof toysListToys>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
   const queryOptions = getToysListToysQueryOptions(petId, params, options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+export const prefetchToysListToysQuery = async <
+  TData = Awaited<ReturnType<typeof toysListToys>>,
+  TError = NotFoundError,
+>(
+  queryClient: QueryClient,
+  petId: number,
+  params?: ToysListToysParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof toysListToys>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): Promise<QueryClient> => {
+  const queryOptions = getToysListToysQueryOptions(petId, params, options);
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+};
+
+export const getToysListToysSuspenseQueryOptions = <
+  TData = Awaited<ReturnType<typeof toysListToys>>,
+  TError = NotFoundError,
+>(
+  petId: number,
+  params?: ToysListToysParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof toysListToys>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getToysListToysQueryKey(petId, params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof toysListToys>>> = ({
+    signal,
+  }) => toysListToys(petId, params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseSuspenseQueryOptions<
+    Awaited<ReturnType<typeof toysListToys>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ToysListToysSuspenseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof toysListToys>>
+>;
+export type ToysListToysSuspenseQueryError = NotFoundError;
+
+export function useToysListToysSuspense<
+  TData = Awaited<ReturnType<typeof toysListToys>>,
+  TError = NotFoundError,
+>(
+  petId: number,
+  params: undefined | ToysListToysParams,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof toysListToys>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useToysListToysSuspense<
+  TData = Awaited<ReturnType<typeof toysListToys>>,
+  TError = NotFoundError,
+>(
+  petId: number,
+  params?: ToysListToysParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof toysListToys>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useToysListToysSuspense<
+  TData = Awaited<ReturnType<typeof toysListToys>>,
+  TError = NotFoundError,
+>(
+  petId: number,
+  params?: ToysListToysParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof toysListToys>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useToysListToysSuspense<
+  TData = Awaited<ReturnType<typeof toysListToys>>,
+  TError = NotFoundError,
+>(
+  petId: number,
+  params?: ToysListToysParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof toysListToys>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getToysListToysSuspenseQueryOptions(
+    petId,
+    params,
+    options,
+  );
+
+  const query = useSuspenseQuery(
+    queryOptions,
+    queryClient,
+  ) as UseSuspenseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
   };
 
   query.queryKey = queryOptions.queryKey;
@@ -160,17 +389,12 @@ export const toysCreateToy = async (
   params?: ToysCreateToyParams,
   options?: RequestInit,
 ): Promise<Toy> => {
-  const res = await fetch(getToysCreateToyUrl(petId, params), {
+  return customFetch<Toy>(getToysCreateToyUrl(petId, params), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(toy),
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  const data: Toy = body ? JSON.parse(body) : {};
-
-  return data;
 };
 
 export const getToysCreateToyMutationOptions = <
@@ -183,7 +407,7 @@ export const getToysCreateToyMutationOptions = <
     { petId: number; data: Toy; params?: ToysCreateToyParams },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof toysCreateToy>>,
   TError,
@@ -191,13 +415,13 @@ export const getToysCreateToyMutationOptions = <
   TContext
 > => {
   const mutationKey = ["toysCreateToy"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof toysCreateToy>>,
@@ -205,7 +429,7 @@ export const getToysCreateToyMutationOptions = <
   > = (props) => {
     const { petId, data, params } = props ?? {};
 
-    return toysCreateToy(petId, data, params, fetchOptions);
+    return toysCreateToy(petId, data, params, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -220,15 +444,18 @@ export type ToysCreateToyMutationError = ValidationError | UnauthorizedError;
 export const useToysCreateToy = <
   TError = ValidationError | UnauthorizedError,
   TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof toysCreateToy>>,
-    TError,
-    { petId: number; data: Toy; params?: ToysCreateToyParams },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof toysCreateToy>>,
+      TError,
+      { petId: number; data: Toy; params?: ToysCreateToyParams },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof toysCreateToy>>,
   TError,
   { petId: number; data: Toy; params?: ToysCreateToyParams },
@@ -236,7 +463,7 @@ export const useToysCreateToy = <
 > => {
   const mutationOptions = getToysCreateToyMutationOptions(options);
 
-  return useMutation(mutationOptions);
+  return useMutation(mutationOptions, queryClient);
 };
 export const getToysUpdateToyUrl = (
   petId: number,
@@ -265,17 +492,12 @@ export const toysUpdateToy = async (
   params?: ToysUpdateToyParams,
   options?: RequestInit,
 ): Promise<Toy> => {
-  const res = await fetch(getToysUpdateToyUrl(petId, toyId, params), {
+  return customFetch<Toy>(getToysUpdateToyUrl(petId, toyId, params), {
     ...options,
     method: "PUT",
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(toy),
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  const data: Toy = body ? JSON.parse(body) : {};
-
-  return data;
 };
 
 export const getToysUpdateToyMutationOptions = <
@@ -288,7 +510,7 @@ export const getToysUpdateToyMutationOptions = <
     { petId: number; toyId: number; data: Toy; params?: ToysUpdateToyParams },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof toysUpdateToy>>,
   TError,
@@ -296,13 +518,13 @@ export const getToysUpdateToyMutationOptions = <
   TContext
 > => {
   const mutationKey = ["toysUpdateToy"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof toysUpdateToy>>,
@@ -310,7 +532,7 @@ export const getToysUpdateToyMutationOptions = <
   > = (props) => {
     const { petId, toyId, data, params } = props ?? {};
 
-    return toysUpdateToy(petId, toyId, data, params, fetchOptions);
+    return toysUpdateToy(petId, toyId, data, params, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -328,15 +550,18 @@ export type ToysUpdateToyMutationError =
 export const useToysUpdateToy = <
   TError = ValidationError | UnauthorizedError | NotFoundError,
   TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof toysUpdateToy>>,
-    TError,
-    { petId: number; toyId: number; data: Toy; params?: ToysUpdateToyParams },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof toysUpdateToy>>,
+      TError,
+      { petId: number; toyId: number; data: Toy; params?: ToysUpdateToyParams },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof toysUpdateToy>>,
   TError,
   { petId: number; toyId: number; data: Toy; params?: ToysUpdateToyParams },
@@ -344,7 +569,7 @@ export const useToysUpdateToy = <
 > => {
   const mutationOptions = getToysUpdateToyMutationOptions(options);
 
-  return useMutation(mutationOptions);
+  return useMutation(mutationOptions, queryClient);
 };
 export const getToysDeleteToyUrl = (
   petId: number,
@@ -372,15 +597,10 @@ export const toysDeleteToy = async (
   params?: ToysDeleteToyParams,
   options?: RequestInit,
 ): Promise<null> => {
-  const res = await fetch(getToysDeleteToyUrl(petId, toyId, params), {
+  return customFetch<null>(getToysDeleteToyUrl(petId, toyId, params), {
     ...options,
     method: "DELETE",
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  const data: null = body ? JSON.parse(body) : {};
-
-  return data;
 };
 
 export const getToysDeleteToyMutationOptions = <
@@ -393,7 +613,7 @@ export const getToysDeleteToyMutationOptions = <
     { petId: number; toyId: number; params?: ToysDeleteToyParams },
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof toysDeleteToy>>,
   TError,
@@ -401,13 +621,13 @@ export const getToysDeleteToyMutationOptions = <
   TContext
 > => {
   const mutationKey = ["toysDeleteToy"];
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof toysDeleteToy>>,
@@ -415,7 +635,7 @@ export const getToysDeleteToyMutationOptions = <
   > = (props) => {
     const { petId, toyId, params } = props ?? {};
 
-    return toysDeleteToy(petId, toyId, params, fetchOptions);
+    return toysDeleteToy(petId, toyId, params, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -430,15 +650,18 @@ export type ToysDeleteToyMutationError = UnauthorizedError;
 export const useToysDeleteToy = <
   TError = UnauthorizedError,
   TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof toysDeleteToy>>,
-    TError,
-    { petId: number; toyId: number; params?: ToysDeleteToyParams },
-    TContext
-  >;
-  fetch?: RequestInit;
-}): UseMutationResult<
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof toysDeleteToy>>,
+      TError,
+      { petId: number; toyId: number; params?: ToysDeleteToyParams },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof toysDeleteToy>>,
   TError,
   { petId: number; toyId: number; params?: ToysDeleteToyParams },
@@ -446,5 +669,5 @@ export const useToysDeleteToy = <
 > => {
   const mutationOptions = getToysDeleteToyMutationOptions(options);
 
-  return useMutation(mutationOptions);
+  return useMutation(mutationOptions, queryClient);
 };
