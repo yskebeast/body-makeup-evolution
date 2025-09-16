@@ -38,4 +38,14 @@ export default defineConfig({
       afterAllFilesWrite: "prettier --write",
     },
   },
+  bodyMakeupEvolutionZod: {
+    input: "../schemas/openapi.2.0.yaml",
+    output: {
+      target: "./src/api/zod/",
+      client: "zod",
+      mode: "tags-split",
+      fileExtension: ".zod.ts",
+      clean: true,
+    },
+  },
 });

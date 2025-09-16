@@ -11,6 +11,20 @@ function makeQueryClient() {
     defaultOptions: {
       queries: {
         staleTime: 60 * 1000,
+        retry: (failureCount, error) => {
+          if (error instanceof DOMException && error.name === 'AbortError') {
+            return false;
+          }
+          return failureCount < 3;
+        },
+      },
+      mutations: {
+        retry: (failureCount, error) => {
+          if (error instanceof DOMException && error.name === 'AbortError') {
+            return false;
+          }
+          return failureCount < 3;
+        },
       },
     },
   });
