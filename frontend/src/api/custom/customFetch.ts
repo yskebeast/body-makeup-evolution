@@ -20,6 +20,10 @@ export const customFetch = async <TData>(url: string, options: RequestInit = {})
     const data: TData = await response.json();
     return data;
   } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return Promise.reject(error);
+    }
+
     console.error("customFetch Error:", error);
     throw error;
   }
