@@ -4,15 +4,22 @@
  * Pet Store
  * OpenAPI spec version: 2.0
  */
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
+  QueryClient,
   QueryFunction,
   QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
+  UseSuspenseQueryOptions,
+  UseSuspenseQueryResult,
 } from "@tanstack/react-query";
 
 import type {
@@ -66,10 +73,8 @@ export const getPetsListPetsQueryOptions = <
 >(
   params?: PetsListPetsParams,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof petsListPets>>,
-      TError,
-      TData
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof petsListPets>>, TError, TData>
     >;
     request?: SecondParameter<typeof customFetch>;
   },
@@ -86,7 +91,7 @@ export const getPetsListPetsQueryOptions = <
     Awaited<ReturnType<typeof petsListPets>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type PetsListPetsQueryResult = NonNullable<
@@ -98,20 +103,231 @@ export function usePetsListPets<
   TData = Awaited<ReturnType<typeof petsListPets>>,
   TError = unknown,
 >(
+  params: undefined | PetsListPetsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof petsListPets>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof petsListPets>>,
+          TError,
+          Awaited<ReturnType<typeof petsListPets>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePetsListPets<
+  TData = Awaited<ReturnType<typeof petsListPets>>,
+  TError = unknown,
+>(
   params?: PetsListPetsParams,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof petsListPets>>,
-      TError,
-      TData
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof petsListPets>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof petsListPets>>,
+          TError,
+          Awaited<ReturnType<typeof petsListPets>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePetsListPets<
+  TData = Awaited<ReturnType<typeof petsListPets>>,
+  TError = unknown,
+>(
+  params?: PetsListPetsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof petsListPets>>, TError, TData>
     >;
     request?: SecondParameter<typeof customFetch>;
   },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function usePetsListPets<
+  TData = Awaited<ReturnType<typeof petsListPets>>,
+  TError = unknown,
+>(
+  params?: PetsListPetsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof petsListPets>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
   const queryOptions = getPetsListPetsQueryOptions(params, options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+export const prefetchPetsListPetsQuery = async <
+  TData = Awaited<ReturnType<typeof petsListPets>>,
+  TError = unknown,
+>(
+  queryClient: QueryClient,
+  params?: PetsListPetsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof petsListPets>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): Promise<QueryClient> => {
+  const queryOptions = getPetsListPetsQueryOptions(params, options);
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+};
+
+export const getPetsListPetsSuspenseQueryOptions = <
+  TData = Awaited<ReturnType<typeof petsListPets>>,
+  TError = unknown,
+>(
+  params?: PetsListPetsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof petsListPets>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getPetsListPetsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof petsListPets>>> = ({
+    signal,
+  }) => petsListPets(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseSuspenseQueryOptions<
+    Awaited<ReturnType<typeof petsListPets>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type PetsListPetsSuspenseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof petsListPets>>
+>;
+export type PetsListPetsSuspenseQueryError = unknown;
+
+export function usePetsListPetsSuspense<
+  TData = Awaited<ReturnType<typeof petsListPets>>,
+  TError = unknown,
+>(
+  params: undefined | PetsListPetsParams,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof petsListPets>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePetsListPetsSuspense<
+  TData = Awaited<ReturnType<typeof petsListPets>>,
+  TError = unknown,
+>(
+  params?: PetsListPetsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof petsListPets>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePetsListPetsSuspense<
+  TData = Awaited<ReturnType<typeof petsListPets>>,
+  TError = unknown,
+>(
+  params?: PetsListPetsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof petsListPets>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function usePetsListPetsSuspense<
+  TData = Awaited<ReturnType<typeof petsListPets>>,
+  TError = unknown,
+>(
+  params?: PetsListPetsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof petsListPets>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getPetsListPetsSuspenseQueryOptions(params, options);
+
+  const query = useSuspenseQuery(
+    queryOptions,
+    queryClient,
+  ) as UseSuspenseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
   };
 
   query.queryKey = queryOptions.queryKey;
@@ -193,15 +409,18 @@ export type PetsCreatePetMutationError = ValidationError | UnauthorizedError;
 export const usePetsCreatePet = <
   TError = ValidationError | UnauthorizedError,
   TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof petsCreatePet>>,
-    TError,
-    { data: Pet; params?: PetsCreatePetParams },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof petsCreatePet>>,
+      TError,
+      { data: Pet; params?: PetsCreatePetParams },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof petsCreatePet>>,
   TError,
   { data: Pet; params?: PetsCreatePetParams },
@@ -209,7 +428,7 @@ export const usePetsCreatePet = <
 > => {
   const mutationOptions = getPetsCreatePetMutationOptions(options);
 
-  return useMutation(mutationOptions);
+  return useMutation(mutationOptions, queryClient);
 };
 export const getPetsGetPetUrl = (petId: number, params?: PetsGetPetParams) => {
   const normalizedParams = new URLSearchParams();
@@ -252,10 +471,8 @@ export const getPetsGetPetQueryOptions = <
   petId: number,
   params?: PetsGetPetParams,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof petsGetPet>>,
-      TError,
-      TData
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof petsGetPet>>, TError, TData>
     >;
     request?: SecondParameter<typeof customFetch>;
   },
@@ -278,7 +495,7 @@ export const getPetsGetPetQueryOptions = <
     Awaited<ReturnType<typeof petsGetPet>>,
     TError,
     TData
-  > & { queryKey: QueryKey };
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type PetsGetPetQueryResult = NonNullable<
@@ -291,20 +508,245 @@ export function usePetsGetPet<
   TError = NotFoundError,
 >(
   petId: number,
+  params: undefined | PetsGetPetParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof petsGetPet>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof petsGetPet>>,
+          TError,
+          Awaited<ReturnType<typeof petsGetPet>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePetsGetPet<
+  TData = Awaited<ReturnType<typeof petsGetPet>>,
+  TError = NotFoundError,
+>(
+  petId: number,
   params?: PetsGetPetParams,
   options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof petsGetPet>>,
-      TError,
-      TData
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof petsGetPet>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof petsGetPet>>,
+          TError,
+          Awaited<ReturnType<typeof petsGetPet>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePetsGetPet<
+  TData = Awaited<ReturnType<typeof petsGetPet>>,
+  TError = NotFoundError,
+>(
+  petId: number,
+  params?: PetsGetPetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof petsGetPet>>, TError, TData>
     >;
     request?: SecondParameter<typeof customFetch>;
   },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function usePetsGetPet<
+  TData = Awaited<ReturnType<typeof petsGetPet>>,
+  TError = NotFoundError,
+>(
+  petId: number,
+  params?: PetsGetPetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof petsGetPet>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
   const queryOptions = getPetsGetPetQueryOptions(petId, params, options);
 
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+export const prefetchPetsGetPetQuery = async <
+  TData = Awaited<ReturnType<typeof petsGetPet>>,
+  TError = NotFoundError,
+>(
+  queryClient: QueryClient,
+  petId: number,
+  params?: PetsGetPetParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof petsGetPet>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): Promise<QueryClient> => {
+  const queryOptions = getPetsGetPetQueryOptions(petId, params, options);
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+};
+
+export const getPetsGetPetSuspenseQueryOptions = <
+  TData = Awaited<ReturnType<typeof petsGetPet>>,
+  TError = NotFoundError,
+>(
+  petId: number,
+  params?: PetsGetPetParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof petsGetPet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getPetsGetPetQueryKey(petId, params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof petsGetPet>>> = ({
+    signal,
+  }) => petsGetPet(petId, params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseSuspenseQueryOptions<
+    Awaited<ReturnType<typeof petsGetPet>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type PetsGetPetSuspenseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof petsGetPet>>
+>;
+export type PetsGetPetSuspenseQueryError = NotFoundError;
+
+export function usePetsGetPetSuspense<
+  TData = Awaited<ReturnType<typeof petsGetPet>>,
+  TError = NotFoundError,
+>(
+  petId: number,
+  params: undefined | PetsGetPetParams,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof petsGetPet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePetsGetPetSuspense<
+  TData = Awaited<ReturnType<typeof petsGetPet>>,
+  TError = NotFoundError,
+>(
+  petId: number,
+  params?: PetsGetPetParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof petsGetPet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePetsGetPetSuspense<
+  TData = Awaited<ReturnType<typeof petsGetPet>>,
+  TError = NotFoundError,
+>(
+  petId: number,
+  params?: PetsGetPetParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof petsGetPet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function usePetsGetPetSuspense<
+  TData = Awaited<ReturnType<typeof petsGetPet>>,
+  TError = NotFoundError,
+>(
+  petId: number,
+  params?: PetsGetPetParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof petsGetPet>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getPetsGetPetSuspenseQueryOptions(
+    petId,
+    params,
+    options,
+  );
+
+  const query = useSuspenseQuery(
+    queryOptions,
+    queryClient,
+  ) as UseSuspenseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
   };
 
   query.queryKey = queryOptions.queryKey;
@@ -404,15 +846,18 @@ export const usePetsUpdatePet = <
     | NotFoundError
     | InternalServerError,
   TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof petsUpdatePet>>,
-    TError,
-    { petId: number; data: Pet; params?: PetsUpdatePetParams },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof petsUpdatePet>>,
+      TError,
+      { petId: number; data: Pet; params?: PetsUpdatePetParams },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof petsUpdatePet>>,
   TError,
   { petId: number; data: Pet; params?: PetsUpdatePetParams },
@@ -420,7 +865,7 @@ export const usePetsUpdatePet = <
 > => {
   const mutationOptions = getPetsUpdatePetMutationOptions(options);
 
-  return useMutation(mutationOptions);
+  return useMutation(mutationOptions, queryClient);
 };
 export const getPetsDeletePetUrl = (
   petId: number,
@@ -499,15 +944,18 @@ export type PetsDeletePetMutationError = UnauthorizedError;
 export const usePetsDeletePet = <
   TError = UnauthorizedError,
   TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof petsDeletePet>>,
-    TError,
-    { petId: number; params?: PetsDeletePetParams },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof petsDeletePet>>,
+      TError,
+      { petId: number; params?: PetsDeletePetParams },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
   Awaited<ReturnType<typeof petsDeletePet>>,
   TError,
   { petId: number; params?: PetsDeletePetParams },
@@ -515,5 +963,5 @@ export const usePetsDeletePet = <
 > => {
   const mutationOptions = getPetsDeletePetMutationOptions(options);
 
-  return useMutation(mutationOptions);
+  return useMutation(mutationOptions, queryClient);
 };

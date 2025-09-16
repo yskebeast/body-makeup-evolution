@@ -17,6 +17,12 @@ export default defineConfig({
         indexMockFiles: true,
       },
       override: {
+        query: {
+          useQuery: true,
+          usePrefetch: true,
+          useMutation: true,
+          useSuspenseQuery: true,
+        },
         mutator: {
           path: "./src/api/custom/customFetch.ts",
           name: "customFetch",
