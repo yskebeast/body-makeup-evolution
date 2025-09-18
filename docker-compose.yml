@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: body-makeup-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - body-makeup-network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  body-makeup-network:
+    driver: bridge
