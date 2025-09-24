@@ -1,7 +1,10 @@
 import { Suspense, type ReactNode } from "react";
 import { MswClientProvider } from "../MswClientProvider";
 
-if (process.env.NEXT_RUNTIME === "nodejs") {
+if (
+  process.env.NEXT_RUNTIME === "nodejs" &&
+  process.env.NEXT_PUBLIC_MSW_ENABLE === "true"
+) {
   const { server } = await import("@/msw/server");
   server.listen({ onUnhandledRequest: "bypass" });
 }
@@ -17,7 +20,9 @@ const LoadingFallback = () => {
         </div>
         <div className="text-center">
           <h3 className="text-lg font-medium text-gray-900">Loading...</h3>
-          <p className="text-sm text-gray-500">Setting up mock service worker</p>
+          <p className="text-sm text-gray-500">
+            Setting up mock service worker
+          </p>
         </div>
       </div>
     </div>
@@ -25,6 +30,10 @@ const LoadingFallback = () => {
 };
 
 export const MswProvider = ({ children }: { children: ReactNode }) => {
+  if (process.env.NEXT_PUBLIC_MSW_ENABLE !== "true") {
+    return children;
+  }
+
   return (
     <Suspense fallback={<LoadingFallback />}>
       <MswClientProvider>{children}</MswClientProvider>
