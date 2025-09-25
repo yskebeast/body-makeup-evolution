@@ -2,6 +2,7 @@
 
 import { fetcher } from "@/utils/fetcher";
 import { cookies } from "next/headers";
+import { refreshTokenAction } from "./postRefreshToken";
 
 export interface User {
   id: number;
@@ -10,18 +11,53 @@ export interface User {
   is_active: boolean;
 }
 
-export async function getCurrentUserAction(): Promise<any | null> {
-  const cookieStore = await cookies();
+const fetchUserWithToken = async (token: string): Promise<User | null> => {
   try {
-    const res: User = await fetcher("/auth/userinfo/", {
+    return await fetcher<User>("/auth/userinfo/", {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${cookieStore.get("access_token")?.value}`,
+        Authorization: `Bearer ${token}`,
       },
     });
-    return res;
   } catch (error) {
     console.error("Failed to fetch user:", error);
     return null;
   }
+};
+
+const tryRefreshAndFetchUser = async (): Promise<User | null> => {
+  const refreshSuccess = await refreshTokenAction();
+
+  if (!refreshSuccess) {
+    return null;
+  }
+
+  const cookieStore = await cookies();
+  const newAccessToken = cookieStore.get("access_token")?.value;
+
+  if (!newAccessToken) {
+    return null;
+  }
+
+  return fetchUserWithToken(newAccessToken);
+};
+
+export async function getCurrentUserAction(): Promise<User | null> {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get("refresh_token")?.value;
+
+  if (!refreshToken) {
+    return null;
+  }
+
+  const accessToken = cookieStore.get("access_token")?.value;
+
+  if (accessToken) {
+    const user = await fetchUserWithToken(accessToken);
+    if (user) {
+      return user;
+    }
+  }
+
+  return tryRefreshAndFetchUser();
 }

@@ -36,3 +36,19 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     expires_in: int
+    refresh_token: str
+    refresh_expires_in: int
+
+    class Config:
+        extra = "forbid"
+
+
+class TokenRefresh(BaseModel):
+    """リフレッシュトークンのレスポンス用スキーマ"""
+
+    access_token: str
+    token_type: str
+    expires_in: int
+
+    class Config:
+        extra = "forbid"

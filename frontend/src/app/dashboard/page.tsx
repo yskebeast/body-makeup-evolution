@@ -1,11 +1,46 @@
-import { getCurrentUserAction } from "@/app/actions/getCurrentUser";
-import { redirect } from "next/navigation";
+"use client";
 
-export default async function DashboardPage() {
-  const user = await getCurrentUserAction();
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getCurrentUserAction, type User } from "@/app/actions/getCurrentUser";
+
+export default function DashboardPage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const userData = await getCurrentUserAction();
+        if (!userData) {
+          router.push("/auth/login");
+          return;
+        }
+        setUser(userData);
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+        router.push("/auth/login");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchUser();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="flex items-center justify-center">
+          <div className="text-lg">読み込み中...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
-    redirect("/auth/login");
+    return null;
   }
 
   return (

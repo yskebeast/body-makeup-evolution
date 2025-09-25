@@ -1,14 +1,14 @@
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 
-from app.constant.jwt import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.constant.jwt import REFRESH_TOKEN_EXPIRE_DAYS, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.schemas import auth as schemas
 from app.models import auth as models
 from app.crud import auth as crud
@@ -90,10 +90,56 @@ async def login(user_credentials: schemas.UserLogin, db: Session = Depends(get_d
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(data={"sub": user.email, "name": user.name}, expires_delta=access_token_expires)
-    return {"access_token": access_token, "token_type": "bearer", "expires_in": access_token_expires.total_seconds()}
+
+    refresh_token_expires = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    refresh_token = create_access_token(data={"sub": user.email}, expires_delta=refresh_token_expires)
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "expires_in": int(access_token_expires.total_seconds()),
+        "refresh_expires_in": int(refresh_token_expires.total_seconds()),
+    }
 
 
 @router.get("/userinfo/", response_model=schemas.User)
 def read_users_me(current_user: schemas.User = Depends(get_current_active_user)):
     """Get current user information"""
     return current_user
+
+
+@router.post("/refresh/", response_model=schemas.TokenRefresh)
+async def refresh_token(request: Request, db: Session = Depends(get_db)):
+    refresh_token = request.cookies.get("refresh_token")
+
+    if not refresh_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token missing")
+    print(f"Received refresh token: {refresh_token[:20]}...")
+
+    try:
+        if not SECRET_KEY:
+            raise ValueError("SECRET_KEY is not set in environment variables")
+
+        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("sub")
+        if not isinstance(email, str):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+        if email is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+
+    # 新しいアクセストークンを生成
+    user = crud.get_user_by_email(db, email=email)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(data={"sub": user.email, "name": user.name}, expires_delta=access_token_expires)
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "expires_in": int(access_token_expires.total_seconds()),
+    }

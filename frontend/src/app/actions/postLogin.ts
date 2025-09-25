@@ -13,6 +13,8 @@ export interface LoginResponse {
   access_token: string;
   token_type: string;
   expires_in: number;
+  refresh_token: string;
+  refresh_expires_in: number;
 }
 
 export async function postLoginAction(data: LoginData) {
@@ -23,11 +25,21 @@ export async function postLoginAction(data: LoginData) {
     });
 
     const cookieStore = await cookies();
-    // Consider using a refresh_token for long-term token renewal
+
     cookieStore.set("access_token", res.access_token, {
       httpOnly: true,
+      secure: true,
       maxAge: res.expires_in,
+      sameSite: "strict",
     });
+
+    cookieStore.set("refresh_token", res.refresh_token, {
+      httpOnly: true,
+      secure: true,
+      maxAge: res.refresh_expires_in,
+      sameSite: "strict",
+    });
+
     redirect("/dashboard");
   } catch (error) {
     console.error("Login failed:", error);
