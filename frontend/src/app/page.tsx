@@ -3,6 +3,16 @@ import Link from "next/link";
 const getSamplePages = () => {
   const samplePages = [
     {
+      path: "/auth/login",
+      name: "Login",
+      description: "User authentication - Login page",
+    },
+    {
+      path: "/auth/register",
+      name: "Register",
+      description: "User authentication - Registration page",
+    },
+    {
       path: "/samples/csr",
       name: "CSR Sample",
       description: "Client Side Rendering example",
@@ -28,8 +38,8 @@ export default function Home() {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
       <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Body Makeup Evolution</h1>
-        <p className="text-gray-600 text-lg">Frontend Application Samples</p>
+        <h1 className="text-4xl font-bold mb-4 text-black">Body Makeup Evolution</h1>
+        <p className="text-black text-lg">Frontend Application Samples</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -40,10 +50,10 @@ export default function Home() {
             className="block p-6 bg-white rounded-lg shadow-md border hover:shadow-lg transition-shadow hover:border-blue-300"
           >
             <div className="space-y-3">
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold text-black">
                 {page.name}
               </h2>
-              <p className="text-gray-600 text-sm">{page.description}</p>
+              <p className="text-black text-sm">{page.description}</p>
               <div className="flex items-center text-blue-600 text-sm font-medium">
                 View Sample
                 <svg
