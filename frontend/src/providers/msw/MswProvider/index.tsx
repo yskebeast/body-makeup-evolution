@@ -7,6 +7,7 @@ if (
 ) {
   const { server } = await import("@/msw/server");
   server.listen({ onUnhandledRequest: "bypass" });
+  console.log("🚀 Mock Service Worker is running 🚀");
 }
 
 const LoadingFallback = () => {
