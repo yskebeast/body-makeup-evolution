@@ -1,7 +1,7 @@
 "use client";
 
 import { postLoginAction } from "@/app/actions/postLogin";
-import { LoginFormData, loginSchema } from "@/schemas/login";
+import { LoginFormData, loginSchema } from "@/schemas/loginForm";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
