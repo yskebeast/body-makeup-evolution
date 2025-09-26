@@ -3,23 +3,16 @@
 import { cookies } from "next/headers";
 import { fetcher } from "@/utils/fetcher";
 import { redirect } from "next/navigation";
+import { LoginApiResponse } from "@/schemas/loginApi";
 
-export interface LoginData {
+interface LoginData {
   email: string;
   password: string;
 }
 
-export interface LoginResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-  refresh_token: string;
-  refresh_expires_in: number;
-}
-
 export async function postLoginAction(data: LoginData) {
   try {
-    const res: LoginResponse = await fetcher("/auth/login/", {
+    const res: LoginApiResponse = await fetcher("/auth/login/", {
       method: "POST",
       body: JSON.stringify(data),
     });

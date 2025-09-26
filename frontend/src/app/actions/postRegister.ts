@@ -1,14 +1,9 @@
 "use server";
 
+import { RegisterApiRequest } from "@/schemas/registerApi";
 import { fetcher } from "@/utils/fetcher";
 
-export interface RegisterData {
-  name: string;
-  email: string;
-  password: string;
-}
-
-export async function postRegisterAction(data: RegisterData) {
+export async function postRegisterAction(data: RegisterApiRequest) {
   try {
     const res = await fetcher("/auth/register/", {
       method: "POST",

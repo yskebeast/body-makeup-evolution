@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { registerSchema, RegisterFormValues } from "@/schemas/register";
+import { registerSchema, RegisterFormValues } from "@/schemas/registerForm";
 import { postRegisterAction } from "@/app/actions/postRegister";
 
 export const RegisterForm = () => {
