@@ -48,19 +48,23 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
         if not SECRET_KEY:
             raise ValueError("SECRET_KEY is not set in environment variables")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email = payload.get("sub")
-        if not isinstance(email, str):
+        user_id = payload.get("sub")
+        if not isinstance(user_id, str):
             raise credentials_exception
-        if email is None:
+        if user_id is None:
+            raise credentials_exception
+        try:
+            user_id = int(user_id)
+        except ValueError:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    return email
+    return user_id
 
 
-def get_current_user(db: Session = Depends(get_db), email: str = Depends(verify_token)):
+def get_current_user(db: Session = Depends(get_db), user_id: int = Depends(verify_token)):
     """現在のユーザーを取得"""
-    user = crud.get_user_by_email(db, email=email)
+    user = crud.get_user(db, user_id=user_id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return user
@@ -89,10 +93,10 @@ async def login(user_credentials: schemas.UserLogin, db: Session = Depends(get_d
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(data={"sub": user.email, "name": user.name}, expires_delta=access_token_expires)
+    access_token = create_access_token(data={"sub": str(user.id), "name": user.name}, expires_delta=access_token_expires)
 
     refresh_token_expires = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    refresh_token = create_access_token(data={"sub": user.email}, expires_delta=refresh_token_expires)
+    refresh_token = create_access_token(data={"sub": str(user.id)}, expires_delta=refresh_token_expires)
 
     return {
         "access_token": access_token,
@@ -122,21 +126,25 @@ async def refresh_token(request: Request, db: Session = Depends(get_db)):
             raise ValueError("SECRET_KEY is not set in environment variables")
 
         payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
-        email = payload.get("sub")
-        if not isinstance(email, str):
+        user_id = payload.get("sub")
+        if not isinstance(user_id, str):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
-        if email is None:
+        if user_id is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+        try:
+            user_id = int(user_id)
+        except ValueError:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
     # 新しいアクセストークンを生成
-    user = crud.get_user_by_email(db, email=email)
+    user = crud.get_user(db, user_id=user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(data={"sub": user.email, "name": user.name}, expires_delta=access_token_expires)
+    access_token = create_access_token(data={"sub": str(user.id), "name": user.name}, expires_delta=access_token_expires)
 
     return {
         "access_token": access_token,
