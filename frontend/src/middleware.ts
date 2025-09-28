@@ -38,8 +38,8 @@ export async function middleware(request: NextRequest) {
   }
 
   if (accessToken && refreshToken && isAuthPage) {
-    const dashboardUrl = new URL("/dashboard", request.nextUrl.origin);
-    return NextResponse.redirect(dashboardUrl);
+    const profileUrl = new URL("/profile", request.nextUrl.origin);
+    return NextResponse.redirect(profileUrl);
   }
 
   if (!accessToken && !refreshToken && UNAUTHORIZED_REDIRECT_PATHS.includes(pathname)) {

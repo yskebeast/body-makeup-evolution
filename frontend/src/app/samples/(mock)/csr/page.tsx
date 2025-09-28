@@ -174,7 +174,7 @@ export default function MockServerTestPage() {
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Mock Server Verification Dashboard
+            Mock Server Verification Profile
           </h1>
           <div
             className={`border rounded-lg p-4 ${

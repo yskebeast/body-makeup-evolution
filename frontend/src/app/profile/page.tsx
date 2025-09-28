@@ -2,7 +2,7 @@ import { UserinfoApiResponse } from "@/schemas/userinfoApi";
 import { fetcher } from "@/utils/fetcher";
 import { cookies } from "next/headers";
 
-export default async function DashboardPage() {
+export default async function ProfilePage() {
   const getCurrentUser = async () => {
     const cookieStore = await cookies();
     const token = cookieStore.get("access_token")?.value;
@@ -27,7 +27,7 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-4">Profile</h1>
       {user ? (
         <div>
           <p>

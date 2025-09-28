@@ -33,7 +33,7 @@ export async function postLoginAction(data: LoginData) {
       sameSite: "strict",
     });
 
-    redirect("/dashboard");
+    redirect("/profile");
   } catch (error) {
     console.error("Login failed:", error);
     throw error;
