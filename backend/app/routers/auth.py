@@ -93,7 +93,9 @@ async def login(user_credentials: schemas.UserLogin, db: Session = Depends(get_d
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(data={"sub": str(user.id), "name": user.name}, expires_delta=access_token_expires)
+    access_token = create_access_token(
+        data={"sub": str(user.id), "name": user.name}, expires_delta=access_token_expires
+    )
 
     refresh_token_expires = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     refresh_token = create_access_token(data={"sub": str(user.id)}, expires_delta=refresh_token_expires)
@@ -111,6 +113,22 @@ async def login(user_credentials: schemas.UserLogin, db: Session = Depends(get_d
 def read_users_me(current_user: schemas.User = Depends(get_current_active_user)):
     """Get current user information"""
     return current_user
+
+
+@router.patch("/profile/update/", response_model=schemas.UserUpdateResponse)
+def update_profile(user_update: schemas.UserUpdate, db: Session = Depends(get_db)):
+    if user_update.name is None or user_update.email is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name and email cannot be None")
+
+    user = crud.update_user(db, user_update.user_id, user_update.name, user_update.email)
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return {
+        "email": user.email,
+        "name": user.name,
+    }
 
 
 @router.post("/refresh/", response_model=schemas.TokenRefresh)
@@ -144,7 +162,9 @@ async def refresh_token(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(data={"sub": str(user.id), "name": user.name}, expires_delta=access_token_expires)
+    access_token = create_access_token(
+        data={"sub": str(user.id), "name": user.name}, expires_delta=access_token_expires
+    )
 
     return {
         "access_token": access_token,

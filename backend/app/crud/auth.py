@@ -16,7 +16,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-# User-related CRUD
 def get_user(db: Session, user_id: int):
     """get user by ID"""
     return db.query(models.User).filter(models.User.id == user_id).first()
@@ -25,6 +24,17 @@ def get_user(db: Session, user_id: int):
 def get_user_by_email(db: Session, email: str):
     """get user by email"""
     return db.query(models.User).filter(models.User.email == email).first()
+
+
+def update_user(db: Session, user_id: int, user_name: str, email: str):
+    """update user information"""
+    result = db.query(models.User).filter(models.User.id == user_id).update({"name": user_name, "email": email})
+    db.commit()
+
+    if result == 0:
+        return None
+
+    return db.query(models.User).filter(models.User.id == user_id).first()
 
 
 def get_users(db: Session, skip: int = 0, limit: int = 100):
@@ -38,18 +48,6 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    return db_user
-
-
-def update_user(db: Session, user_id: int, user_update: schemas.UserUpdate):
-    """update user information"""
-    db_user = get_user(db, user_id)
-    if db_user:
-        update_data = user_update.dict(exclude_unset=True)
-        for field, value in update_data.items():
-            setattr(db_user, field, value)
-        db.commit()
-        db.refresh(db_user)
     return db_user
 
 
