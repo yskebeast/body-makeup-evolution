@@ -37,6 +37,25 @@ def update_user(db: Session, user_id: int, user_name: str, email: str):
     return db.query(models.User).filter(models.User.id == user_id).first()
 
 
+def update_user_password(db: Session, password_update: schemas.PasswordUpdate):
+    """update user password"""
+    try:
+        user = db.query(models.User).filter(models.User.id == password_update.user_id).first()
+        if not user or not verify_password(password_update.current_password, str(user.hashed_password)):
+            raise ValueError("Current password is incorrect")
+
+        hashed_password = get_password_hash(password_update.new_password)
+        db.query(models.User).filter(models.User.id == password_update.user_id).update(
+            {"hashed_password": hashed_password}
+        )
+        db.commit()
+
+        return {"message": "Password updated successfully", "status": "success"}
+    except Exception as e:
+        db.rollback()
+        raise e
+
+
 def get_users(db: Session, skip: int = 0, limit: int = 100):
     """get user list"""
     return db.query(models.User).offset(skip).limit(limit).all()
