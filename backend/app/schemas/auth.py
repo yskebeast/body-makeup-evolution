@@ -36,6 +36,20 @@ class User(UserBase):
         orm_mode = True
 
 
+class PasswordUpdate(BaseModel):
+    user_id: int
+    current_password: str
+    new_password: str
+
+
+class PasswordUpdateResponse(BaseModel):
+    message: str
+    status: str
+
+    class Config:
+        extra = "forbid"
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str

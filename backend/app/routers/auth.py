@@ -131,6 +131,12 @@ def update_profile(user_update: schemas.UserUpdate, db: Session = Depends(get_db
     }
 
 
+@router.patch("/password/update/", response_model=schemas.PasswordUpdateResponse)
+def update_password(password_update: schemas.PasswordUpdate, db: Session = Depends(get_db)):
+
+    return crud.update_user_password(db=db, password_update=password_update)
+
+
 @router.post("/refresh/", response_model=schemas.TokenRefresh)
 async def refresh_token(request: Request, db: Session = Depends(get_db)):
     refresh_token = request.cookies.get("refresh_token")

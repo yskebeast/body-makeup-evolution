@@ -31,12 +31,20 @@ export default async function ProfilePage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Profile</h1>
         {user && (
-          <Link
-            href="/profile/edit"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-          >
-            プロフィールを編集
-          </Link>
+          <div className="flex gap-3">
+            <Link
+              href="/profile/edit"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+            >
+              プロフィールを編集
+            </Link>
+            <Link
+              href="/profile/change-password"
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+            >
+              パスワード変更
+            </Link>
+          </div>
         )}
       </div>
 
