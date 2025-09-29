@@ -1,28 +1,24 @@
-from datetime import datetime, timedelta, timezone
-from typing import Union
-
-from jose import JWTError, jwt
-from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from passlib.context import CryptContext
-from pydantic import BaseModel
 
+from app.core.config import settings
 from app.database.connection import engine
-from app.models import auth
+from app.models import auth as models_auth
+from app.routers import auth as routers_auth
 
-auth.Base.metadata.create_all(bind=engine)
+# Create database tables
+models_auth.Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+app = FastAPI(
+    title="Body Makeup Evolution API", description="API for body makeup evolution application", version="1.0.0"
+)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 本番環境では適切に設定
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-from app.routers import auth
-
-app.include_router(auth.router, prefix="/auth", tags=["authentication"])
+app.include_router(routers_auth.router, prefix="/auth", tags=["authentication"])
