@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { AUTH_PATH_PREFIX, UNAUTHORIZED_REDIRECT_PATHS } from "../const/auth";
+import { AUTH_PATH_PREFIX, UNAUTHORIZED_REDIRECT_PATHS } from "./const/auth";
 import { fetcher } from "./utils/fetcher";
 import { RefreshApiResponse } from "./schemas/refreshApi";
 
