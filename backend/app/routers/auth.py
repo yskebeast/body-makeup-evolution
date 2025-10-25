@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
@@ -6,6 +6,7 @@ from jose import JWTError, jwt
 
 from app.core.config import settings
 from app.core.security import create_access_token, get_current_active_user
+from app.core.password import verify_password
 from app.schemas import auth as schemas
 from app.crud import auth as crud
 from app.database.connection import get_db
@@ -25,7 +26,7 @@ async def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 async def login(user_credentials: schemas.UserLogin, db: Session = Depends(get_db)):
     user = crud.get_user_by_email(db, email=user_credentials.email)
 
-    if not user or not crud.verify_password(user_credentials.password, str(user.hashed_password)):
+    if not user or not verify_password(user_credentials.password, str(user.hashed_password)):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
