@@ -5,5 +5,5 @@ interface Navigation {
 
 export const NAVIGATION: Navigation[] = [
   { name: "Profile", href: "/profile" },
-  { name: "Daily", href: "/daily" },
+  { name: "Dashboard", href: "/dashboard" },
 ];
